@@ -56,9 +56,9 @@ class RasterAlg(QgsProcessingAlgorithm):
         #インフラデータチャレンジの審査（2019/04）までに全ての指数を選択可能なコードに書き換えること
         # ["NDVI", "MSAVI", "VARI", "BAI"],
         self.addParameter(QgsProcessingParameterEnum(
-            self.INPUT_MODE, 
-            self.tr("MODE"), 
-             ["NDVI"],
+            self.INPUT_MODE,
+            self.tr("MODE"),
+             ["NDVI","MSAVI","VARI","BAI"],
             False, None, False)
             )
 
@@ -77,7 +77,7 @@ class RasterAlg(QgsProcessingAlgorithm):
         #計算の実行
         #DO SOME CALCULATION
         QgsMessageLog.logMessage("Operation started")
-        srcRas, width, height, nodata = self.get_band_array(raster.dataProvider().dataSourceUri())
+        srcRas, srcArray, width, height, nodata = self.get_band_array(raster.dataProvider().dataSourceUri())
         QgsMessageLog.logMessage(str(srcArray[0]))
         dstArray = self.calculate(mode_str, srcArray)
         self.write_array(output_raster_path, mode_str, srcRas, width, height, nodata, dstArray)
@@ -122,13 +122,28 @@ class RasterAlg(QgsProcessingAlgorithm):
             NDVI_denominator = srcArray[3]+srcArray[2]
             dstArray = NDVI_numerator/NDVI_denominator
 
-#        #VARI
-#        elif mode_str == "1":
-#            VARI_numerator = srcArray[1]-srcArray[2]
-#            VARI_denominator = srcArray[1]+srcArray[2]-srcArray[0]
-#            dstArray = VARI_numerator/VARI_denominator
+        #MSAVI
+        elif mode_str == "1":
+            pre_MSAVI_1 = 2*(srcArray[3]+1)
+            pre_MSAVI_2 = (srcArray[3]*2+1)**2
+            pre_MSAVI_3 = 8*(srcArray[3]-srcArray[2])
+            dstArray = (pre_MSAVI_1-np.sqrt(pre_MSAVI_2-pre_MSAVI_3))/2
+
+        #VARI
+        elif mode_str == "2":
+            VARI_numerator = srcArray[1]-srcArray[2]
+            VARI_denominator = srcArray[1]+srcArray[2]-srcArray[0]
+            dstArray = VARI_numerator/VARI_denominator
+
+        #BAI
+        elif mode_str == "3":
+            pre_BAI_1 = (0.1-srcArray[0])**2
+            pre_BAI_2 = (0.06-srcArray[3])**2
+            dstArray = 1/(pre_BAI_1 + pre_BAI_2)
+
+
 #        #BAI
-#        elif mode_str == "2":
+#        elif mode_str == "3":
 #            B = np.apply_along_axis(lambda x: 0.1-x, 0, srcArray[2])
 #            C = np.apply_along_axis(lambda x: 0.06-x, 0, srcArray[3])
 #            dstArray = 1/(B**2 + C**2)
