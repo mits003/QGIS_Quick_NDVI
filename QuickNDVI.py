@@ -141,13 +141,6 @@ class RasterAlg(QgsProcessingAlgorithm):
             pre_BAI_2 = (0.06-srcArray[3])**2
             dstArray = 1/(pre_BAI_1 + pre_BAI_2)
 
-
-#        #BAI
-#        elif mode_str == "3":
-#            B = np.apply_along_axis(lambda x: 0.1-x, 0, srcArray[2])
-#            C = np.apply_along_axis(lambda x: 0.06-x, 0, srcArray[3])
-#            dstArray = 1/(B**2 + C**2)
-
         dstArray_str = str(dstArray)
         QgsMessageLog.logMessage(dstArray_str)
 
